@@ -1,0 +1,50 @@
+stages:
+  - validate
+  - preview
+  - deploy
+
+image: python:3.11
+
+variables:
+  PULUMI_STACK: "dev"
+  AWS_REGION: "ap-northeast-1"
+
+before_script:
+  - python -V
+  - python -m venv venv
+  - source venv/bin/activate
+  - pip install -r requirements.txt
+
+  # install Pulumi CLI
+  - curl -fsSL https://get.pulumi.com | sh
+  - export PATH="$PATH:$HOME/.pulumi/bin"
+  - pulumi version
+
+  # login to Pulumi Cloud (token stored in GitLab CI variables)
+  - pulumi login
+
+validate:
+  stage: validate
+  script:
+    - python -m compileall .
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+preview:
+  stage: preview
+  script:
+    - pulumi stack select "$PULUMI_STACK" || pulumi stack init "$PULUMI_STACK"
+    - pulumi config set aws:region "$AWS_REGION"
+    - pulumi preview
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+deploy:
+  stage: deploy
+  script:
+    - pulumi stack select "$PULUMI_STACK"
+    - pulumi config set aws:region "$AWS_REGION"
+    - pulumi up --yes
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  when: manual
