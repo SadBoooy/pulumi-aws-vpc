@@ -75,6 +75,11 @@
  pulumi stack output bucket_name
  ```
 
+## CI/CD
+This repository includes a sample GitLab CI/CD pipeline (.gitlab-ci.yml)
+demonstrating infrastructure validation, preview on merge requests,
+and manual deployment on the main branch.
+
  ## Next Steps
 
  - Customize `__main__.py` to add or configure additional resources.
